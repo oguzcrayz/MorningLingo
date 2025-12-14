@@ -13,10 +13,13 @@ def get_db_connection():
     try:
         # YÖNTEM 1: Streamlit Cloud (Secrets - TOML Formatı)
         if 'gcp_service_account' in st.secrets:
+            # Secrets objesini sözlüğe çeviriyoruz
             key_dict = dict(st.secrets['gcp_service_account'])
-            # Private Key içindeki \n karakterlerini düzelt
+            
+            # Private Key içindeki \n karakterlerini düzelt (Çok Önemli!)
             if 'private_key' in key_dict:
                 key_dict['private_key'] = key_dict['private_key'].replace('\\n', '\n')
+            
             creds = ServiceAccountCredentials.from_json_keyfile_dict(key_dict, scope)
 
         # YÖNTEM 2: Bilgisayarında (secrets.json)
@@ -60,7 +63,7 @@ def register_user(username, password, name):
         except: return False
     return False
 
-# --- 3. XP VE PUAN SİSTEMİ (Eksik Olan Kısım Burasıydı) ---
+# --- 3. XP VE PUAN SİSTEMİ (Hata veren yer burasıydı, düzelttik) ---
 def get_user_xp(username):
     sheet = get_db_connection()
     if sheet:
@@ -68,8 +71,9 @@ def get_user_xp(username):
             users_ws = sheet.worksheet('users')
             records = users_ws.get_all_records()
             for user in records:
-                if user['username'] == username:
-                    return int(user.get('xp', 0))
+                if str(user['username']) == username:
+                    # XP değeri boşsa veya yoksa 0 döndür
+                    return int(user.get('xp') or 0)
         except: return 0
     return 0
 
@@ -80,19 +84,20 @@ def add_xp(username, amount):
             users_ws = sheet.worksheet('users')
             cell = users_ws.find(username)
             if cell:
-                # XP Sütununu bul (Genelde 4. sütundur ama başlığa bakalım)
+                # Başlıkları kontrol et
                 headers = users_ws.row_values(1)
                 if 'xp' not in headers:
-                    # Eğer XP başlığı yoksa ekleyelim
                     col_idx = len(headers) + 1
                     users_ws.update_cell(1, col_idx, 'xp')
                 else:
                     col_idx = headers.index('xp') + 1
                 
-                # Mevcut puanı al ve ekle
+                # Mevcut puanı al
                 cur_val = users_ws.cell(cell.row, col_idx).value
-                new_val = int(cur_val if cur_val else 0) + amount
-                users_ws.update_cell(cell.row, col_idx, new_val)
+                # Eğer hücre boşsa 0 kabul et
+                current_xp = int(cur_val) if cur_val and str(cur_val).isdigit() else 0
+                
+                users_ws.update_cell(cell.row, col_idx, current_xp + amount)
         except: pass
 
 # --- 4. KELİME İŞLEMLERİ ---
@@ -102,7 +107,6 @@ def add_word(username, word, meaning, example="-", synonyms="-", forms="-"):
         try:
             vocab_ws = sheet.worksheet('vocab')
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            # Varsayılan zorluk: Hard
             vocab_ws.append_row([username, word, meaning, example, synonyms, forms, date, "Hard"])
         except: pass
 
@@ -140,7 +144,6 @@ def update_difficulty(username, word, status):
             vocab_ws = sheet.worksheet('vocab')
             cell = vocab_ws.find(word)
             if cell:
-                # Difficulty sütunu genelde sonlardadır, başlığa bakıp bulalım
                 headers = vocab_ws.row_values(1)
                 if 'difficulty' in headers:
                     col_idx = headers.index('difficulty') + 1
@@ -148,13 +151,9 @@ def update_difficulty(username, word, status):
         except: pass
 
 def get_smart_quiz_words(username, limit=5):
-    # Özellikle 'Hard' (Zor) olan kelimeleri sınava sokar
     words = get_user_words(username)
     if not words: return []
     hard_words = [w for w in words if w.get('difficulty') == 'Hard']
-    
-    # Yeterince zor kelime yoksa karışık al
     if len(hard_words) < limit:
-        return get_random_words(username, limit)
-    
+        return [w['word'] for w in words[:limit]] # Yeterince yoksa normal getir
     return [w['word'] for w in random.sample(hard_words, limit)]
