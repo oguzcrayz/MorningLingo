@@ -127,9 +127,16 @@ with st.sidebar:
     with st.popover("ℹ️ API Key Yardımı"):
         st.markdown("**1.** [Google AI Studio](https://aistudio.google.com/app/apikey)'ya git.\n**2.** 'Create API Key' de.\n**3.** Kodu kopyala ve yapıştır.")
     
+# --- YENİ KOD: Hem Secrets hem Manuel ---
+    if 'api_key' in st.secrets:
+        st.session_state['api_key'] = st.secrets['api_key']
+    
     if 'api_key' not in st.session_state: st.session_state['api_key'] = ''
-    api_key_input = st.text_input("Google API Key", value=st.session_state['api_key'], type="password")
-    if api_key_input: st.session_state['api_key'] = api_key_input
+    
+    # Eğer şifre otomatik gelmediyse kutucuğu göster
+    if not st.session_state['api_key']:
+        api_key_input = st.text_input("Google API Key", value=st.session_state['api_key'], type="password")
+        if api_key_input: st.session_state['api_key'] = api_key_input
     
     st.markdown("### Ayarlar")
     lang_level = st.selectbox("Seviye", ["B1", "B2", "C1"])
@@ -340,4 +347,5 @@ with tab6:
             if st.button("Ekle"): 
                 m,e,s,f=tutor.analyze_word(st.session_state['fe'])
                 db.add_word(st.session_state['username'], st.session_state['fe'], m, e if 'e' in locals() else "-", s, f)
+
                 celebrate_xp(10); st.success("OK")
