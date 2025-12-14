@@ -2,7 +2,7 @@
 
 MorningLingo, kullanıcının İngilizce seviyesine göre kişiselleştirilmiş içerikler sunan, yapay zeka destekli bir dil öğrenme asistanıdır. Google Gemini, Google Sheets ve Streamlit teknolojileri kullanılarak geliştirilmiştir.
 
-🔗 **Canlı Demo:** [Buraya Streamlit Linkini Yapıştır]
+🔗 **Canlı Demo:** [ https://morninglingo-tynczbqvgsd48yshgu9vxd.streamlit.app/ ]
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
