@@ -5,7 +5,7 @@ import random
 class AITutor:
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     def get_chat_response(self, user_input, history):
         prompt = f"""You are a helpful English tutor. 
