@@ -399,7 +399,7 @@ with tabs[4]:
     if user_words:
         word_count = len(user_words)
 
-        # En az 3 kelime gerekli
+        # En az 3 kelime gerekli (slider için min < max olmalı)
         if word_count < 3:
             st.warning(f"Bu ozellik icin en az 3 kelime gerekli. Simdilik {word_count} kelimen var.")
         else:
@@ -408,8 +408,9 @@ with tabs[4]:
                 wl_level = st.selectbox("Seviye", ["A1", "A2", "B1", "B2", "C1", "C2"], key="wl_level")
             with col2:
                 max_words = min(20, word_count)
+                min_words = min(3, max_words - 1) if max_words > 1 else 1
                 default_words = min(5, max_words)
-                wl_count = st.slider("Kac kelime kullanilsin?", 3, max_words, default_words)
+                wl_count = st.slider("Kac kelime kullanilsin?", min_words, max_words, default_words)
 
             st.info(f"Oncelik sistemine gore kelime secilecek: Cok oncelikli kelimeler 4x, Orta 2x, Az 1x olasilikla secilir.")
 
@@ -551,13 +552,14 @@ with tabs[6]:
     if user_words:
         word_count = len(user_words)
 
-        # En az 3 kelime gerekli
+        # En az 3 kelime gerekli (slider için min < max olmalı)
         if word_count < 3:
             st.warning(f"Sinav icin en az 3 kelime gerekli. Simdilik {word_count} kelimen var.")
         else:
             max_questions = min(15, word_count)
+            min_questions = min(3, max_questions - 1) if max_questions > 1 else 1
             default_questions = min(5, max_questions)
-            quiz_count = st.slider("Kac soru?", 3, max_questions, default_questions, key="quiz_count")
+            quiz_count = st.slider("Kac soru?", min_questions, max_questions, default_questions, key="quiz_count")
 
             if st.button("Sinava Basla", use_container_width=True, type="primary"):
                 with st.spinner("Sinav hazirlaniyor..."):
