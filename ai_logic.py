@@ -5,7 +5,8 @@ import random
 class AITutor:
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Güncel model: gemini-1.5-flash (hızlı ve güvenilir)
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     # --- 1. CHAT FONKSİYONU ---
     def get_chat_response(self, user_input, history):
@@ -62,7 +63,7 @@ class AITutor:
             "Felsefi": "philosophical and thought-provoking (deep questions, existence, meaning)",
             "Sanatsal": "artistic and creative (describing art, beauty, aesthetics)",
             "Edebi": "literary (storytelling, narrative, descriptive prose)",
-            "İkna Edici": "persuasive (convincing, argumentative, opinion-based)",
+            "Ikna Edici": "persuasive (convincing, argumentative, opinion-based)",
             "Hukuki": "legal style (formal, contracts, rights, regulations)",
             "Dini": "spiritual/religious (faith, morality, values)"
         }
@@ -87,8 +88,8 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
-            return "Metin oluşturulamadı. Lütfen tekrar dene."
+        except Exception as e:
+            return f"Metin olusturulamadi. Hata: {str(e)}"
 
     # --- 4. KELİME LİSTESİNDEN METİN OLUŞTURMA ---
     def generate_text_from_words(self, words, level, highlight=True):
@@ -110,8 +111,8 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
-            return "Metin oluşturulamadı."
+        except Exception as e:
+            return f"Metin olusturulamadi. Hata: {str(e)}"
 
     # --- 5. RASTGELE KELİME ÜRETİMİ (SEVİYEYE GÖRE) ---
     def generate_random_words(self, level, count):
