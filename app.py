@@ -549,72 +549,80 @@ with tabs[6]:
     st.caption("Kaydettigin kelimelerden sinav ol (oncelikli kelimeler daha cok sorulur)")
 
     if user_words:
-        quiz_count = st.slider("Kac soru?", 3, min(15, len(user_words)), min(5, len(user_words)), key="quiz_count")
+        word_count = len(user_words)
 
-        if st.button("Sinava Basla", use_container_width=True, type="primary"):
-            with st.spinner("Sinav hazirlaniyor..."):
-                q_words = db.get_smart_quiz_words(st.session_state['username'], quiz_count)
-                if q_words:
-                    quiz = tutor.generate_quiz(q_words)
-                    if quiz:
-                        st.session_state['quiz'] = quiz
-                        st.session_state['quiz_answers'] = {}
-                        st.session_state['quiz_submitted'] = False
+        # En az 3 kelime gerekli
+        if word_count < 3:
+            st.warning(f"Sinav icin en az 3 kelime gerekli. Simdilik {word_count} kelimen var.")
+        else:
+            max_questions = min(15, word_count)
+            default_questions = min(5, max_questions)
+            quiz_count = st.slider("Kac soru?", 3, max_questions, default_questions, key="quiz_count")
+
+            if st.button("Sinava Basla", use_container_width=True, type="primary"):
+                with st.spinner("Sinav hazirlaniyor..."):
+                    q_words = db.get_smart_quiz_words(st.session_state['username'], quiz_count)
+                    if q_words:
+                        quiz = tutor.generate_quiz(q_words)
+                        if quiz:
+                            st.session_state['quiz'] = quiz
+                            st.session_state['quiz_answers'] = {}
+                            st.session_state['quiz_submitted'] = False
+                        else:
+                            st.error("Sinav olusturulamadi. Tekrar dene.")
                     else:
-                        st.error("Sinav olusturulamadi. Tekrar dene.")
-                else:
-                    st.warning("Yeterli kelime yok.")
+                        st.warning("Yeterli kelime yok.")
 
-        if 'quiz' in st.session_state and st.session_state['quiz']:
-            st.divider()
-
-            if not st.session_state.get('quiz_submitted', False):
-                for i, q in enumerate(st.session_state['quiz']):
-                    st.write(f"**{i + 1}. {q.get('question', 'Soru yok')}**")
-                    answer = st.radio(
-                        "Secenek sec:",
-                        q.get('options', []),
-                        key=f"quiz_q_{i}",
-                        index=None
-                    )
-                    st.session_state['quiz_answers'][i] = answer
-                    st.divider()
-
-                if st.button("Sinavi Bitir", use_container_width=True, type="primary"):
-                    st.session_state['quiz_submitted'] = True
-                    st.rerun()
-            else:
-                # Sonuçları göster
-                correct = 0
-                total = len(st.session_state['quiz'])
-
-                for i, q in enumerate(st.session_state['quiz']):
-                    user_answer = st.session_state['quiz_answers'].get(i)
-                    correct_answer = q.get('answer')
-                    is_correct = user_answer == correct_answer
-
-                    if is_correct:
-                        correct += 1
-                        st.success(f"{i + 1}. {q.get('question')} - Dogru!")
-                    else:
-                        st.error(f"{i + 1}. {q.get('question')}")
-                        st.write(f"   Senin cevabin: {user_answer}")
-                        st.write(f"   Dogru cevap: {correct_answer}")
-
-                # Sonuç
-                score = int((correct / total) * 100)
+            if 'quiz' in st.session_state and st.session_state['quiz']:
                 st.divider()
-                st.subheader(f"Sonuc: {correct}/{total} ({score}%)")
 
-                xp_earned = correct * 10 + (50 if score == 100 else 0)
-                st.write(f"Kazanilan XP: +{xp_earned}")
-                db.add_xp(st.session_state['username'], xp_earned)
+                if not st.session_state.get('quiz_submitted', False):
+                    for i, q in enumerate(st.session_state['quiz']):
+                        st.write(f"**{i + 1}. {q.get('question', 'Soru yok')}**")
+                        answer = st.radio(
+                            "Secenek sec:",
+                            q.get('options', []),
+                            key=f"quiz_q_{i}",
+                            index=None
+                        )
+                        st.session_state['quiz_answers'][i] = answer
+                        st.divider()
 
-                if st.button("Yeni Sinav"):
-                    del st.session_state['quiz']
-                    del st.session_state['quiz_answers']
-                    del st.session_state['quiz_submitted']
-                    st.rerun()
+                    if st.button("Sinavi Bitir", use_container_width=True, type="primary"):
+                        st.session_state['quiz_submitted'] = True
+                        st.rerun()
+                else:
+                    # Sonuçları göster
+                    correct = 0
+                    total = len(st.session_state['quiz'])
+
+                    for i, q in enumerate(st.session_state['quiz']):
+                        user_answer = st.session_state['quiz_answers'].get(i)
+                        correct_answer = q.get('answer')
+                        is_correct = user_answer == correct_answer
+
+                        if is_correct:
+                            correct += 1
+                            st.success(f"{i + 1}. {q.get('question')} - Dogru!")
+                        else:
+                            st.error(f"{i + 1}. {q.get('question')}")
+                            st.write(f"   Senin cevabin: {user_answer}")
+                            st.write(f"   Dogru cevap: {correct_answer}")
+
+                    # Sonuç
+                    score = int((correct / total) * 100)
+                    st.divider()
+                    st.subheader(f"Sonuc: {correct}/{total} ({score}%)")
+
+                    xp_earned = correct * 10 + (50 if score == 100 else 0)
+                    st.write(f"Kazanilan XP: +{xp_earned}")
+                    db.add_xp(st.session_state['username'], xp_earned)
+
+                    if st.button("Yeni Sinav"):
+                        del st.session_state['quiz']
+                        del st.session_state['quiz_answers']
+                        del st.session_state['quiz_submitted']
+                        st.rerun()
     else:
         st.info("Sinav icin once kelime ekle.")
 
