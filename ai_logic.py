@@ -5,8 +5,8 @@ import random
 class AITutor:
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        # Güncel model: gemini-1.5-flash (hızlı ve güvenilir)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # Model: gemini-2.0-flash (en güncel ve hızlı)
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
 
     # --- 1. CHAT FONKSİYONU ---
     def get_chat_response(self, user_input, history):
