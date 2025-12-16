@@ -397,65 +397,73 @@ with tabs[4]:
     st.caption("Kaydettigin kelimelerden oncelik sistemine gore metin olusturur")
 
     if user_words:
-        col1, col2 = st.columns(2)
-        with col1:
-            wl_level = st.selectbox("Seviye", ["A1", "A2", "B1", "B2", "C1", "C2"], key="wl_level")
-        with col2:
-            wl_count = st.slider("Kac kelime kullanilsin?", 3, min(20, len(user_words)), min(5, len(user_words)))
+        word_count = len(user_words)
 
-        st.info(f"Oncelik sistemine gore kelime secilecek: Cok oncelikli kelimeler 4x, Orta 2x, Az 1x olasilikla secilir.")
+        # En az 3 kelime gerekli
+        if word_count < 3:
+            st.warning(f"Bu ozellik icin en az 3 kelime gerekli. Simdilik {word_count} kelimen var.")
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                wl_level = st.selectbox("Seviye", ["A1", "A2", "B1", "B2", "C1", "C2"], key="wl_level")
+            with col2:
+                max_words = min(20, word_count)
+                default_words = min(5, max_words)
+                wl_count = st.slider("Kac kelime kullanilsin?", 3, max_words, default_words)
 
-        # Kullanılmış kelimeleri göster
-        used_words = db.get_used_words_for_text(st.session_state['username'])
-        if used_words:
-            st.caption(f"Daha once kullanilan kelimeler: {', '.join(used_words)}")
-            if st.button("Kullanilan Kelimeleri Sifirla"):
-                db.reset_used_words()
-                st.rerun()
+            st.info(f"Oncelik sistemine gore kelime secilecek: Cok oncelikli kelimeler 4x, Orta 2x, Az 1x olasilikla secilir.")
 
-        if st.button("Metin Olustur", key="wl_generate", use_container_width=True, type="primary"):
-            with st.spinner("Kelimeler seciliyor ve metin olusturuluyor..."):
-                # Önceliğe göre kelime seç
-                selected_words = db.get_words_by_priority(
-                    st.session_state['username'],
-                    wl_count,
-                    used_words
-                )
+            # Kullanılmış kelimeleri göster
+            used_words = db.get_used_words_for_text(st.session_state['username'])
+            if used_words:
+                st.caption(f"Daha once kullanilan kelimeler: {', '.join(used_words)}")
+                if st.button("Kullanilan Kelimeleri Sifirla"):
+                    db.reset_used_words()
+                    st.rerun()
 
-                if selected_words:
-                    word_texts = [w['word'] for w in selected_words]
-                    db.mark_words_as_used(word_texts)
+            if st.button("Metin Olustur", key="wl_generate", use_container_width=True, type="primary"):
+                with st.spinner("Kelimeler seciliyor ve metin olusturuluyor..."):
+                    # Önceliğe göre kelime seç
+                    selected_words = db.get_words_by_priority(
+                        st.session_state['username'],
+                        wl_count,
+                        used_words
+                    )
 
-                    # Metin oluştur
-                    wl_text = tutor.generate_text_from_words(selected_words, wl_level, highlight=True)
-                    st.session_state['wl_text'] = wl_text
-                    st.session_state['wl_selected'] = selected_words
-                else:
-                    st.warning("Yeterli kelime bulunamadi.")
+                    if selected_words:
+                        word_texts = [w['word'] for w in selected_words]
+                        db.mark_words_as_used(word_texts)
 
-        if 'wl_text' in st.session_state:
-            st.divider()
+                        # Metin oluştur
+                        wl_text = tutor.generate_text_from_words(selected_words, wl_level, highlight=True)
+                        st.session_state['wl_text'] = wl_text
+                        st.session_state['wl_selected'] = selected_words
+                    else:
+                        st.warning("Yeterli kelime bulunamadi.")
 
-            # Seçilen kelimeleri göster
-            if 'wl_selected' in st.session_state:
-                selected_info = []
-                for w in st.session_state['wl_selected']:
-                    p = w.get('priority') or w.get('difficulty') or 'Cok'
-                    selected_info.append(f"{w['word']} ({p})")
-                st.caption(f"Secilen kelimeler: {', '.join(selected_info)}")
+            if 'wl_text' in st.session_state:
+                st.divider()
 
-            st.subheader("Olusturulan Metin")
-            st.markdown(st.session_state['wl_text'])
+                # Seçilen kelimeleri göster
+                if 'wl_selected' in st.session_state:
+                    selected_info = []
+                    for w in st.session_state['wl_selected']:
+                        p = w.get('priority') or w.get('difficulty') or 'Cok'
+                        selected_info.append(f"{w['word']} ({p})")
+                    st.caption(f"Secilen kelimeler: {', '.join(selected_info)}")
 
-            # Sesli okuma
-            if st.button("Sesli Oku", key="wl_audio"):
-                with st.spinner("Ses olusturuluyor..."):
-                    # Markdown işaretlerini temizle
-                    clean_text = st.session_state['wl_text'].replace("**", "")
-                    tts = gTTS(clean_text, lang='en')
-                    audio_buffer = io.BytesIO()
-                    tts.write_to_fp(audio_buffer)
-                    st.audio(audio_buffer, format='audio/mp3')
+                st.subheader("Olusturulan Metin")
+                st.markdown(st.session_state['wl_text'])
+
+                # Sesli okuma
+                if st.button("Sesli Oku", key="wl_audio"):
+                    with st.spinner("Ses olusturuluyor..."):
+                        # Markdown işaretlerini temizle
+                        clean_text = st.session_state['wl_text'].replace("**", "")
+                        tts = gTTS(clean_text, lang='en')
+                        audio_buffer = io.BytesIO()
+                        tts.write_to_fp(audio_buffer)
+                        st.audio(audio_buffer, format='audio/mp3')
     else:
         st.info("Bu ozellik icin once kelime ekle.")
 
