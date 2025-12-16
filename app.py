@@ -87,7 +87,7 @@ if not st.session_state['logged_in']:
         with st.form("login_form"):
             user = st.text_input("Kullanici Adi")
             pwd = st.text_input("Sifre", type="password")
-            if st.form_submit_button("Giris Yap", use_container_width=True):
+            if st.form_submit_button("Giris Yap", width="stretch"):
                 name = db.login_user(user, pwd)
                 if name:
                     st.session_state['logged_in'] = True
@@ -103,7 +103,7 @@ if not st.session_state['logged_in']:
             new_user = st.text_input("Kullanici Adi Sec")
             new_pwd = st.text_input("Sifre Sec", type="password")
             new_name = st.text_input("Adin Nedir?")
-            if st.form_submit_button("Kayit Ol", use_container_width=True):
+            if st.form_submit_button("Kayit Ol", width="stretch"):
                 if new_user and new_pwd and new_name:
                     if db.register_user(new_user, new_pwd, new_name):
                         st.success("Kayit basarili! Giris yapabilirsin.")
@@ -227,7 +227,7 @@ with tabs[1]:
     with col2:
         st.write("")  # Spacing
         st.write("")
-        add_btn = st.button("Analiz Et & Ekle", use_container_width=True)
+        add_btn = st.button("Analiz Et & Ekle", width="stretch")
 
     if add_btn and new_word:
         with st.spinner("Kelime analiz ediliyor..."):
@@ -324,17 +324,17 @@ with tabs[2]:
         # Butonlar
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("Hatirlamiyorum", use_container_width=True, type="secondary"):
+            if st.button("Hatirlamiyorum", width="stretch", type="secondary"):
                 db.increase_priority(st.session_state['username'], w['word'])
                 st.session_state['fc_idx'] += 1
                 st.session_state['fc_flip'] = False
                 st.rerun()
         with col2:
-            if st.button("Cevir", use_container_width=True):
+            if st.button("Cevir", width="stretch"):
                 st.session_state['fc_flip'] = not st.session_state['fc_flip']
                 st.rerun()
         with col3:
-            if st.button("Biliyorum", use_container_width=True, type="primary"):
+            if st.button("Biliyorum", width="stretch", type="primary"):
                 db.decrease_priority(st.session_state['username'], w['word'])
                 st.session_state['fc_idx'] += 1
                 st.session_state['fc_flip'] = False
@@ -371,7 +371,7 @@ with tabs[3]:
     with col3:
         text_length = st.slider("Kelime Sayisi", 50, 800, 150, step=50)
 
-    if st.button("Metin Olustur", use_container_width=True, type="primary"):
+    if st.button("Metin Olustur", width="stretch", type="primary"):
         with st.spinner("Metin olusturuluyor..."):
             generated_text = tutor.generate_text(text_level, text_type, text_length)
             st.session_state['generated_text'] = generated_text
@@ -422,7 +422,7 @@ with tabs[4]:
                     db.reset_used_words()
                     st.rerun()
 
-            if st.button("Metin Olustur", key="wl_generate", use_container_width=True, type="primary"):
+            if st.button("Metin Olustur", key="wl_generate", width="stretch", type="primary"):
                 with st.spinner("Kelimeler seciliyor ve metin olusturuluyor..."):
                     # Önceliğe göre kelime seç
                     selected_words = db.get_words_by_priority(
@@ -479,7 +479,7 @@ with tabs[5]:
     with col2:
         rw_count = st.slider("Kac kelime?", 1, 20, 5, key="rw_count")
 
-    if st.button("Rastgele Kelime Getir", use_container_width=True, type="primary"):
+    if st.button("Rastgele Kelime Getir", width="stretch", type="primary"):
         with st.spinner(f"{rw_count} kelime getiriliyor..."):
             random_words = tutor.generate_random_words(rw_level, rw_count)
             if random_words:
@@ -526,7 +526,7 @@ with tabs[5]:
 
         # Hepsini ekle butonu
         st.divider()
-        if st.button("Tum Kelimeleri Listeme Ekle", use_container_width=True):
+        if st.button("Tum Kelimeleri Listeme Ekle", width="stretch"):
             for word_data in st.session_state['random_words']:
                 db.add_word(
                     st.session_state['username'],
@@ -561,7 +561,7 @@ with tabs[6]:
             default_questions = min(5, max_questions)
             quiz_count = st.slider("Kac soru?", min_questions, max_questions, default_questions, key="quiz_count")
 
-            if st.button("Sinava Basla", use_container_width=True, type="primary"):
+            if st.button("Sinava Basla", width="stretch", type="primary"):
                 with st.spinner("Sinav hazirlaniyor..."):
                     q_words = db.get_smart_quiz_words(st.session_state['username'], quiz_count)
                     if q_words:
@@ -590,7 +590,7 @@ with tabs[6]:
                         st.session_state['quiz_answers'][i] = answer
                         st.divider()
 
-                    if st.button("Sinavi Bitir", use_container_width=True, type="primary"):
+                    if st.button("Sinavi Bitir", width="stretch", type="primary"):
                         st.session_state['quiz_submitted'] = True
                         st.rerun()
                 else:
