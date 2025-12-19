@@ -2,6 +2,25 @@ import google.generativeai as genai
 import json
 import random
 
+# Kota hatası için özel mesaj
+QUOTA_ERROR_MESSAGE = """⚠️ API Kota Hatası!
+
+Google Gemini API ücretsiz kullanım limitiniz dolmuş.
+
+Çözüm için:
+1. Farklı bir API anahtarı kullanın
+2. Ücretli plana geçiş yapın (https://ai.google.dev/pricing)
+3. Bir süre bekleyip tekrar deneyin (limit sıfırlanabilir)
+
+Daha fazla bilgi: https://ai.google.dev/gemini-api/docs/rate-limits"""
+
+
+def _is_quota_error(error):
+    """Hatanın kota hatası olup olmadığını kontrol et"""
+    error_str = str(error).lower()
+    return "429" in error_str or "quota" in error_str or "rate limit" in error_str
+
+
 class AITutor:
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
@@ -24,7 +43,9 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
             return "Bağlantı hatası. Lütfen tekrar dene."
 
     # --- 2. KELİME ANALİZİ (GELİŞTİRİLMİŞ) ---
@@ -52,7 +73,9 @@ class AITutor:
             data = json.loads(clean_text)
             corrected = data.get("corrected_word", word)
             return corrected, data.get("meaning", "-"), data.get("example", "-"), data.get("synonyms", "-"), data.get("forms", "-")
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return word, QUOTA_ERROR_MESSAGE, "-", "-", "-"
             return word, "Bulunamadı", "-", "-", "-"
 
     # --- 3. METİN OLUŞTURMA (SEVİYE, TÜR, UZUNLUK) ---
@@ -89,7 +112,9 @@ class AITutor:
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            return f"Metin olusturulamadi. Hata: {str(e)}"
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
+            return f"Metin oluşturulamadı. Lütfen tekrar deneyin."
 
     # --- 4. KELİME LİSTESİNDEN METİN OLUŞTURMA ---
     def generate_text_from_words(self, words, level, highlight=True):
@@ -112,7 +137,9 @@ class AITutor:
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            return f"Metin olusturulamadi. Hata: {str(e)}"
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
+            return f"Metin oluşturulamadı. Lütfen tekrar deneyin."
 
     # --- 5. RASTGELE KELİME ÜRETİMİ (SEVİYEYE GÖRE) ---
     def generate_random_words(self, level, count):
@@ -145,7 +172,9 @@ class AITutor:
             response = self.model.generate_content(prompt)
             clean_text = response.text.strip().replace("```json", "").replace("```", "")
             return json.loads(clean_text)
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return [{"error": QUOTA_ERROR_MESSAGE}]
             return []
 
     # --- 6. HİKAYE OLUŞTURMA ---
@@ -161,7 +190,9 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
             return "Hikaye oluşturulamadı."
 
     # --- 7. QUIZ OLUŞTURMA ---
@@ -191,7 +222,9 @@ class AITutor:
             response = self.model.generate_content(prompt)
             clean_text = response.text.strip().replace("```json", "").replace("```", "")
             return json.loads(clean_text)
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return [{"error": QUOTA_ERROR_MESSAGE}]
             return []
 
     # --- 8. OKUMA METNİ ---
@@ -210,7 +243,9 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
             return "Metin oluşturulamadı."
 
     # --- 9. ÇEVİRİ CHALLENGE ---
@@ -222,7 +257,9 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
             return "Cümle oluşturulamadı."
 
     def check_translation(self, turkish, user_english):
@@ -240,7 +277,9 @@ class AITutor:
         try:
             response = self.model.generate_content(prompt)
             return response.text
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE
             return "Kontrol edilemedi."
 
     # --- 10. BAŞLANGIÇ PAKETİ ---
@@ -266,7 +305,9 @@ class AITutor:
             response = self.model.generate_content(prompt)
             clean_text = response.text.strip().replace("```json", "").replace("```", "")
             return json.loads(clean_text)
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return [{"error": QUOTA_ERROR_MESSAGE}]
             return []
 
     # --- 11. TÜRKÇE-İNGİLİZCE HIZLI TEST ---
@@ -279,7 +320,9 @@ class AITutor:
             clean_text = response.text.strip().replace("```json", "").replace("```", "")
             data = json.loads(clean_text)
             return data.get('tr'), data.get('en')
-        except:
+        except Exception as e:
+            if _is_quota_error(e):
+                return QUOTA_ERROR_MESSAGE, ""
             return "Hata", "Error"
 
     # --- 12. TELAFFUZ KONTROLÜ (PLACEHOLDER) ---
